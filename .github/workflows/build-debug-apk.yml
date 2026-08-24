@@ -1,0 +1,105 @@
+name: Build Debug APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      abi:
+        description: "APK ABI flavor"
+        required: false
+        default: arm64_v8a
+        type: choice
+        options:
+          - arm64_v8a
+          - armeabi_v7a
+      mode:
+        description: "APK UI flavor"
+        required: false
+        default: mobile
+        type: choice
+        options:
+          - mobile
+          - leanback
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-debug-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ inputs.mode }}-${{ inputs.abi }} debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "platforms;android-28" "build-tools;36.0.0"
+          curl -fsSL -o /tmp/platform-37.zip https://dl.google.com/android/repository/platform-37.0_r01.zip
+          rm -rf /tmp/platform-37 "$ANDROID_HOME/platforms/android-37"
+          mkdir -p /tmp/platform-37 "$ANDROID_HOME/platforms"
+          unzip -q /tmp/platform-37.zip -d /tmp/platform-37
+          platform_jar="$(find /tmp/platform-37 -name android.jar -print -quit)"
+          test -n "$platform_jar"
+          mv "$(dirname "$platform_jar")" "$ANDROID_HOME/platforms/android-37"
+
+      - name: Verify build inputs
+        run: |
+          java -version
+          python --version
+          chmod +x ./gradlew
+          test -f app/src/mobile/java/com/fongmi/android/tv/ui/activity/LiveActivity.java
+
+      - name: Build debug APK
+        env:
+          APK_MODE: ${{ inputs.mode }}
+          APK_ABI: ${{ inputs.abi }}
+        run: |
+          set -euo pipefail
+          ./gradlew ":app:assemble${APK_MODE^}${APK_ABI^}Debug" --no-daemon
+
+      - name: Locate APK
+        id: apk
+        env:
+          APK_MODE: ${{ inputs.mode }}
+          APK_ABI: ${{ inputs.abi }}
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/apk -type f -name '*.apk' -path "*/${APK_MODE}${APK_ABI^}/debug/*" -print -quit)"
+          if [ -z "$apk" ]; then
+            apk="$(find app/build/outputs/apk -type f -name '*.apk' -print -quit)"
+          fi
+          test -n "$apk"
+          echo "path=$apk" >> "$GITHUB_OUTPUT"
+          sha256sum "$apk"
+          ls -lh "$apk"
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhtv-${{ inputs.mode }}-${{ inputs.abi }}-debug
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14

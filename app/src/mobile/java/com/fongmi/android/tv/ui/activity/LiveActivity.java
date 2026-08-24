@@ -895,7 +895,8 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
     }
 
     private boolean isEmbeddedLiveUi() {
-        return !ResUtil.isLand(this) && !isRotate() && !isInPictureInPictureMode();
+        // 保持原版直播交互：直播列表覆盖在视频左侧，不使用二开的上下嵌入式布局。
+        return false;
     }
 
     private void keepLiveMenuVisible() {
