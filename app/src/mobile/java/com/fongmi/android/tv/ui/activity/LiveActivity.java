@@ -886,7 +886,12 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         mBinding.epgData.setVisibility(View.VISIBLE);
         mBinding.channel.setVisibility(View.GONE);
         mBinding.group.setVisibility(View.GONE);
-        mBinding.epgData.requestFocus();
+        mBinding.epgData.post(() -> {
+            int position = item.getData(mViewModel.getZoneId()).getSelected();
+            RecyclerView.ViewHolder holder = mBinding.epgData.findViewHolderForAdapterPosition(position);
+            if (holder != null) holder.itemView.requestFocus();
+            else mBinding.epgData.requestFocus();
+        });
     }
 
     private void hideEpg() {
