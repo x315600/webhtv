@@ -14,22 +14,12 @@ import java.util.List;
 
 public class EpgDataAdapter extends RecyclerView.Adapter<EpgDataAdapter.ViewHolder> {
 
-    private final OnClickListener listener;
+    private final OnClickListener mListener;
     private final List<EpgData> mItems;
 
     public EpgDataAdapter(OnClickListener listener) {
-        this.listener = listener;
-        this.mItems = new ArrayList<>();
-    }
-
-    public interface OnClickListener {
-
-        void onItemClick(EpgData item);
-    }
-
-    public void clear() {
-        mItems.clear();
-        notifyDataSetChanged();
+        mListener = listener;
+        mItems = new ArrayList<>();
     }
 
     public void addAll(List<EpgData> items) {
@@ -38,13 +28,18 @@ public class EpgDataAdapter extends RecyclerView.Adapter<EpgDataAdapter.ViewHold
         notifyDataSetChanged();
     }
 
-    public void setSelected(EpgData item) {
-        setSelected(mItems.indexOf(item));
+    public void clear() {
+        mItems.clear();
+        notifyDataSetChanged();
     }
 
-    public void setSelected(int position) {
-        for (int i = 0; i < mItems.size(); i++) mItems.get(i).setSelected(i == position);
-        notifyItemRangeChanged(0, getItemCount());
+    public EpgData get(int position) {
+        return mItems.get(position);
+    }
+
+    public void setSelected(EpgData selected) {
+        for (EpgData item : mItems) item.setSelected(selected);
+        notifyDataSetChanged();
     }
 
     @Override
@@ -64,12 +59,20 @@ public class EpgDataAdapter extends RecyclerView.Adapter<EpgDataAdapter.ViewHold
         holder.binding.time.setText(item.getTime());
         holder.binding.title.setText(item.getTitle());
         holder.binding.getRoot().setSelected(item.isSelected());
-        holder.binding.getRoot().setOnClickListener(view -> {
-            if (!item.isFuture()) listener.onItemClick(item);
+        holder.binding.getRoot().setLeftListener(mListener::hideEpg);
+        holder.binding.getRoot().setOnClickListener(v -> {
+            if (!item.isFuture()) mListener.onItemClick(item);
         });
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public interface OnClickListener {
+
+        void hideEpg();
+
+        void onItemClick(EpgData item);
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
 
         private final AdapterEpgDataBinding binding;
 

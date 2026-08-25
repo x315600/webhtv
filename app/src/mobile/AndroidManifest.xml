@@ -114,12 +114,11 @@
 
         <activity
             android:name=".ui.activity.LiveActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|uiMode|orientation"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:exported="true"
             android:launchMode="singleTop"
             android:parentActivityName=".ui.activity.HomeActivity"
-            android:screenOrientation="fullUser"
-            android:supportsPictureInPicture="true" />
+            android:screenOrientation="sensorLandscape" />
 
         <activity
             android:name=".ui.activity.ScanActivity"
