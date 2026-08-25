@@ -876,7 +876,7 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         mBinding.channel.requestFocus();
         updateOverlayMenuWidths();
         setPosition();
-        if (mEpgDataAdapter.getItemCount() > 0 && mChannel != null) showEpg(mChannel);
+        hideEpg();
     }
 
     private void showEpg(Channel item) {
@@ -1046,12 +1046,6 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         if (item.isSelected() && mChannel != null && mChannel.equals(item) && mChannel.getGroup().equals(mGroup) && isLineDoubleClick(item)) {
             showLineDialog(item);
         } else if (!item.getData(mViewModel.getZoneId()).getList().isEmpty() && item.isSelected() && mChannel != null && mChannel.equals(item) && mChannel.getGroup().equals(mGroup)) {
-            if (!isEmbeddedLiveUi()) {
-                hideUI();
-                hideControl();
-                hideInfo();
-                return;
-            }
             showEpg(item);
         } else if (mGroup != null) {
             mGroup.setPosition(mChannelAdapter.setSelected(item.group(mGroup)));
@@ -1208,7 +1202,6 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         setLiveProgram(epg);
         setWidth(epg);
         setMetadata();
-        if (isVisible(mBinding.recycler) && mEpgDataAdapter.getItemCount() > 0) showEpg(mChannel);
         if (pendingShowEpg) {
             pendingShowEpg = false;
             showEpg(mChannel);
