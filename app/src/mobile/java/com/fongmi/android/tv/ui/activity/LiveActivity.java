@@ -895,7 +895,7 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
     }
 
     private boolean isEmbeddedLiveUi() {
-        return !ResUtil.isLand(this) && !isRotate() && !isInPictureInPictureMode();
+        return false;
     }
 
     private void keepLiveMenuVisible() {
