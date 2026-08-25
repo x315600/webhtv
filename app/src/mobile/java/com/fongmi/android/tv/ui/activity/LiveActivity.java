@@ -886,12 +886,6 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         mBinding.epgData.setVisibility(View.VISIBLE);
         mBinding.channel.setVisibility(View.GONE);
         mBinding.group.setVisibility(View.GONE);
-        mBinding.epgData.post(() -> {
-            int position = item.getData(mViewModel.getZoneId()).getSelected();
-            RecyclerView.ViewHolder holder = mBinding.epgData.findViewHolderForAdapterPosition(position);
-            if (holder != null) holder.itemView.requestFocus();
-            else mBinding.epgData.requestFocus();
-        });
     }
 
     private void hideEpg() {
@@ -901,8 +895,7 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
     }
 
     private boolean isEmbeddedLiveUi() {
-        // 保持原版直播交互：直播列表覆盖在视频左侧，不使用二开的上下嵌入式布局。
-        return false;
+        return !ResUtil.isLand(this) && !isRotate() && !isInPictureInPictureMode();
     }
 
     private void keepLiveMenuVisible() {
