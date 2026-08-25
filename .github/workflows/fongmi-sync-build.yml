@@ -1,4 +1,4 @@
-name: Sync FongMi Live Changes and Build APK
+name: Sync Silent1566 WebHTV and Build APK
 
 on:
   schedule:
@@ -20,8 +20,8 @@ permissions:
 
 env:
   TZ: Asia/Shanghai
-  UPSTREAM_REPO: https://github.com/FongMi/TV.git
-  UPSTREAM_BRANCH: fongmi
+  UPSTREAM_REPO: https://github.com/Silent1566/webhtv.git
+  UPSTREAM_BRANCH: main
 
 concurrency:
   group: fongmi-sync-build
