@@ -2160,10 +2160,14 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
 
     @Override
     protected void onBackInvoked() {
-        if (isLock()) {
-            return;
-        } else {
-            onBack();
+        if (isVisible(mBinding.control.getRoot())) {
+            hideControl();
+        } else if (isVisible(mBinding.widget.info)) {
+            hideInfo();
+        } else if (isVisible(mBinding.recycler)) {
+            hideUI();
+        } else if (!isLock()) {
+            finishLivePlayback();
         }
     }
 
