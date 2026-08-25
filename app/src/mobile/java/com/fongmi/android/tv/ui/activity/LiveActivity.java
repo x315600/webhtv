@@ -2043,11 +2043,7 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         if (mBinding.recycler.getParent() == mBinding.getRoot()) return;
         ViewGroup parent = (ViewGroup) mBinding.recycler.getParent();
         if (parent != null) parent.removeView(mBinding.recycler);
-        if (mBinding.getRoot() instanceof LinearLayoutCompat root) {
-            LinearLayoutCompat.LayoutParams params = new LinearLayoutCompat.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
-            params.weight = 14;
-            root.addView(mBinding.recycler, Math.min(1, root.getChildCount()), params);
-        } else if (mBinding.getRoot() instanceof FrameLayout root) {
+        if (mBinding.getRoot() instanceof FrameLayout root) {
             root.addView(mBinding.recycler, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START));
         }
     }
