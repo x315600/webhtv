@@ -58,8 +58,8 @@
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/liveCurrent"
-            android:layout_width="match_parent"
-            android:layout_height="86dp"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
             android:visibility="gone"
             android:layout_marginStart="12dp"
             android:layout_marginTop="12dp"
