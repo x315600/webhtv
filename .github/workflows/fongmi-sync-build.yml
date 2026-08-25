@@ -22,6 +22,12 @@ env:
   TZ: Asia/Shanghai
   UPSTREAM_REPO: https://github.com/Silent1566/webhtv.git
   UPSTREAM_BRANCH: main
+  PROTECTED_LIVE_FILES: |
+    app/src/mobile/java/com/fongmi/android/tv/ui/activity/LiveActivity.java
+    app/src/mobile/java/com/fongmi/android/tv/ui/adapter/EpgDataAdapter.java
+    app/src/mobile/res/color/selector_live_epg_text.xml
+    app/src/mobile/res/layout/activity_live.xml
+    app/src/mobile/res/layout/adapter_epg_data.xml
 
 concurrency:
   group: fongmi-sync-build
@@ -45,18 +51,36 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch and merge FongMi upstream
+      - name: Fetch and merge upstream, preserve local live files
         run: |
           set -euo pipefail
           git fetch --no-tags "$UPSTREAM_REPO" "+refs/heads/$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+          merged_upstream=false
           if git merge-base --is-ancestor "refs/remotes/upstream/$UPSTREAM_BRANCH" HEAD; then
             echo "Upstream is already included."
           else
-            git merge --no-edit --no-ff "refs/remotes/upstream/$UPSTREAM_BRANCH" || {
+            git merge --no-edit --no-ff --no-commit "refs/remotes/upstream/$UPSTREAM_BRANCH" || {
               echo "::error title=Upstream merge conflict::Resolve manually; no push was attempted."
               git merge --abort || true
               exit 1
             }
+            merged_upstream=true
+          fi
+
+          # These files are maintained locally. Restore their pre-merge HEAD
+          # versions after every upstream merge, including non-conflicting ones.
+          if [ "$merged_upstream" = true ]; then
+            while IFS= read -r path; do
+              [ -n "$path" ] || continue
+              git cat-file -e "HEAD^:$path" || {
+                echo "::error title=Protected live file missing::${path} is not present in the pre-merge commit."
+                exit 1
+              }
+              git restore --source=HEAD^ --staged --worktree -- "$path"
+              git add -- "$path"
+              echo "Preserved local live file: $path"
+            done <<< "$PROTECTED_LIVE_FILES"
+            git commit --no-edit
           fi
 
       - name: Set up JDK 21
@@ -85,7 +109,7 @@ jobs:
           test -n "$platform_jar"
           mv "$(dirname "$platform_jar")" "$ANDROID_HOME/platforms/android-37"
 
-      - name: Build mobile ARM64 Debug APK
+      - name: Build mobile APK
         env:
           BUILD_ABI: ${{ inputs.build_abi || 'arm64_v8a' }}
         run: |
