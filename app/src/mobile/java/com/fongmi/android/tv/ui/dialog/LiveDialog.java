@@ -4,6 +4,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.WindowManager;
 
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewbinding.ViewBinding;
 
@@ -25,6 +26,13 @@ public class LiveDialog extends BaseAlertDialog implements LiveAdapter.OnClickLi
 
     public static LiveDialog create() {
         return new LiveDialog();
+    }
+
+    public static void show(Fragment fragment) {
+        if (fragment == null || !fragment.isAdded() || fragment.isStateSaved()) return;
+        LiveDialog dialog = new LiveDialog();
+        dialog.action = true;
+        dialog.show(fragment.getChildFragmentManager(), null);
     }
 
     public LiveDialog action() {

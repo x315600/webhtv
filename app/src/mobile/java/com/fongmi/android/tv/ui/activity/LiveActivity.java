@@ -382,6 +382,19 @@ public class LiveActivity extends PlaybackActivity implements GroupAdapter.OnCli
         fetch();
     }
 
+    private void notifyItemChanged(RecyclerView view, RecyclerView.Adapter<?> adapter) {
+        view.post(new Runnable() {
+            @Override
+            public void run() {
+                if (view.isComputingLayout()) {
+                    view.postOnAnimation(this);
+                } else {
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
+    }
+
     private void setSelected(EpgData item) {
         mEpgDataAdapter.setSelected(item);
         notifyItemChanged(mBinding.epgData, mEpgDataAdapter);
