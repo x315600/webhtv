@@ -213,11 +213,24 @@ public class ConfigDialog extends BaseAlertDialog {
 
     private final ActivityResultLauncher<Intent> launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
         if (result.getResultCode() != Activity.RESULT_OK || result.getData() == null || result.getData().getData() == null) return;
-        String name = binding.name.getText().toString().trim();
         String path = FileChooser.getPathFromUri(result.getData().getData());
-        if (TextUtils.isEmpty(path)) return;
+        if (TextUtils.isEmpty(path)) {
+            Notify.show(R.string.remote_trust_config_url_required);
+            return;
+        }
         String url = "file:/" + path.replace(Path.rootPath(), "");
-        ((ConfigListener) requireParentFragment()).setConfig(saveConfig(url, name));
+        Config config;
+        try {
+            config = saveConfig(url, name);
+        } catch (Exception e) {
+            Notify.show(e.getMessage() == null ? getString(R.string.remote_trust_config_url_required) : e.getMessage());
+            return;
+        }
+        if (config == null || config.isEmpty() || !isAdded() || getParentFragment() == null) {
+            Notify.show(R.string.remote_trust_config_url_required);
+            return;
+        }
+        ((ConfigListener) getParentFragment()).setConfig(config);
         dismiss();
     });
 }
