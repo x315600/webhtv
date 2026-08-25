@@ -1,0 +1,106 @@
+name: Sync FongMi Live Changes and Build APK
+
+on:
+  schedule:
+    # 04:00 Asia/Shanghai = 20:00 UTC previous day
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+    inputs:
+      build_abi:
+        description: "APK ABI"
+        required: false
+        default: arm64_v8a
+        type: choice
+        options:
+          - arm64_v8a
+          - armeabi_v7a
+
+permissions:
+  contents: write
+
+env:
+  TZ: Asia/Shanghai
+  UPSTREAM_REPO: https://github.com/FongMi/TV.git
+  UPSTREAM_BRANCH: fongmi
+
+concurrency:
+  group: fongmi-sync-build
+  cancel-in-progress: false
+
+jobs:
+  sync-build:
+    name: Sync upstream and build mobile APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch and merge FongMi upstream
+        run: |
+          set -euo pipefail
+          git fetch --no-tags "$UPSTREAM_REPO" "+refs/heads/$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+          if git merge-base --is-ancestor "refs/remotes/upstream/$UPSTREAM_BRANCH" HEAD; then
+            echo "Upstream is already included."
+          else
+            git merge --no-edit --no-ff "refs/remotes/upstream/$UPSTREAM_BRANCH" || {
+              echo "::error title=Upstream merge conflict::Resolve manually; no push was attempted."
+              git merge --abort || true
+              exit 1
+            }
+          fi
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager "platform-tools" "platforms;android-28" "build-tools;36.0.0"
+          curl -fsSL -o /tmp/platform-37.zip https://dl.google.com/android/repository/platform-37.0_r01.zip
+          rm -rf /tmp/platform-37 "$ANDROID_HOME/platforms/android-37"
+          mkdir -p /tmp/platform-37 "$ANDROID_HOME/platforms"
+          unzip -q /tmp/platform-37.zip -d /tmp/platform-37
+          platform_jar="$(find /tmp/platform-37 -name android.jar -print -quit)"
+          test -n "$platform_jar"
+          mv "$(dirname "$platform_jar")" "$ANDROID_HOME/platforms/android-37"
+
+      - name: Build mobile ARM64 Debug APK
+        env:
+          BUILD_ABI: ${{ inputs.build_abi || 'arm64_v8a' }}
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew ":app:assembleMobile${BUILD_ABI^}Debug" --no-daemon
+
+      - name: Commit synced source
+        run: |
+          set -euo pipefail
+          if git diff --quiet HEAD^ HEAD 2>/dev/null; then
+            echo "No source changes to commit."
+          else
+            git push origin HEAD:main
+          fi
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhtv-mobile-${{ inputs.build_abi || 'arm64_v8a' }}-debug-with-fongmi-live
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
+          retention-days: 14
