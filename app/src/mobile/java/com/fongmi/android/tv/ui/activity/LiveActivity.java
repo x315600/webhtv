@@ -876,7 +876,7 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         mBinding.channel.requestFocus();
         updateOverlayMenuWidths();
         setPosition();
-        hideEpg();
+        if (mEpgDataAdapter.getItemCount() > 0 && mChannel != null) showEpg(mChannel);
     }
 
     private void showEpg(Channel item) {
@@ -1208,6 +1208,7 @@ public class LiveActivity extends PlaybackActivity implements CustomKeyDown.List
         setLiveProgram(epg);
         setWidth(epg);
         setMetadata();
+        if (isVisible(mBinding.recycler) && mEpgDataAdapter.getItemCount() > 0) showEpg(mChannel);
         if (pendingShowEpg) {
             pendingShowEpg = false;
             showEpg(mChannel);
