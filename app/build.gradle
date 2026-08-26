@@ -159,7 +159,6 @@ dependencies {
     implementation libs.tink.android
     implementation libs.zxing.core
     leanbackImplementation libs.leanback
-    mobileImplementation libs.leanback
     leanbackImplementation libs.androidautosize
     leanbackImplementation libs.zxing.android.embedded
     mobileImplementation libs.biometric

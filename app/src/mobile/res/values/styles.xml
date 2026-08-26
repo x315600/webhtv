@@ -17,17 +17,6 @@
         <item name="android:windowBackground">@color/grey_700</item>
     </style>
 
-    <style name="LiveControl">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">@drawable/selector_chip</item>
-        <item name="android:focusable">true</item>
-        <item name="android:focusableInTouchMode">true</item>
-        <item name="android:nextFocusDown">@id/timeBar</item>
-        <item name="android:textColor">@color/text</item>
-        <item name="android:textSize">14sp</item>
-    </style>
-
     <style name="Control">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

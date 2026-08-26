@@ -31,8 +31,7 @@
             android:id="@+id/control"
             layout="@layout/view_control_live"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
+            android:layout_height="match_parent"
             android:visibility="gone" />
 
         <include
@@ -58,36 +57,46 @@
         android:visibility="gone"
         tools:visibility="visible">
 
-        <com.fongmi.android.tv.ui.custom.CustomLiveListView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/group"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:clipChildren="false"
             android:clipToPadding="false"
-            android:padding="12dp"
+            android:padding="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:itemCount="5"
             tools:listitem="@layout/adapter_group" />
 
-        <com.fongmi.android.tv.ui.custom.CustomLiveListView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/channel"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:clipChildren="false"
-            android:translationX="-12dp"
             android:clipToPadding="false"
-            android:padding="12dp"
+            android:padding="8dp"
+            android:translationX="-16dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:itemCount="5"
             tools:listitem="@layout/adapter_channel" />
 
-        <com.fongmi.android.tv.ui.custom.CustomLiveListView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/epgData"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:clipChildren="false"
             android:clipToPadding="false"
-            android:padding="12dp"
+            android:padding="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:itemCount="5"
             tools:listitem="@layout/adapter_epg_data" />
 
     </androidx.appcompat.widget.LinearLayoutCompat>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/navigation"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:menu="@menu/menu_nav" />
 </FrameLayout>

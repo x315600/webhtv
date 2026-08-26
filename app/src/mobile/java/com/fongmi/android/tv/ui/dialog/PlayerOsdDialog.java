@@ -13,7 +13,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,28 +36,15 @@ public final class PlayerOsdDialog extends DialogFragment {
         void onApply(boolean[] checked);
     }
 
-    public static void show(FragmentActivity activity, String[] items, boolean[] checked, Callback callback) {
-        for (Fragment fragment : activity.getSupportFragmentManager().getFragments()) {
-            if (fragment instanceof PlayerOsdDialog) return;
-        }
-        PlayerOsdDialog dialog = create(items, checked, callback);
-        dialog.show(activity.getSupportFragmentManager(), PlayerOsdDialog.class.getSimpleName());
-    }
-
     public static void show(Fragment fragment, String[] items, boolean[] checked, Callback callback) {
         for (Fragment child : fragment.getChildFragmentManager().getFragments()) {
             if (child instanceof PlayerOsdDialog) return;
         }
-        PlayerOsdDialog dialog = create(items, checked, callback);
-        dialog.show(fragment.getChildFragmentManager(), PlayerOsdDialog.class.getSimpleName());
-    }
-
-    private static PlayerOsdDialog create(String[] items, boolean[] checked, Callback callback) {
         PlayerOsdDialog dialog = new PlayerOsdDialog();
         dialog.items = items == null ? new String[0] : Arrays.copyOf(items, items.length);
         dialog.checked = checked == null ? new boolean[0] : Arrays.copyOf(checked, checked.length);
         dialog.callback = callback;
-        return dialog;
+        dialog.show(fragment.getChildFragmentManager(), PlayerOsdDialog.class.getSimpleName());
     }
 
     @NonNull

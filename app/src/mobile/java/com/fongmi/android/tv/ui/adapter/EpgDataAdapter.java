@@ -4,22 +4,35 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.bean.EpgData;
 import com.fongmi.android.tv.databinding.AdapterEpgDataBinding;
+import com.fongmi.android.tv.setting.LiveSetting;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EpgDataAdapter extends RecyclerView.Adapter<EpgDataAdapter.ViewHolder> {
 
-    private final OnClickListener mListener;
+    private final OnClickListener listener;
     private final List<EpgData> mItems;
 
     public EpgDataAdapter(OnClickListener listener) {
-        mListener = listener;
-        mItems = new ArrayList<>();
+        this.listener = listener;
+        this.mItems = new ArrayList<>();
+    }
+
+    public interface OnClickListener {
+
+        void onItemClick(EpgData item);
+    }
+
+    public void clear() {
+        mItems.clear();
+        notifyDataSetChanged();
     }
 
     public void addAll(List<EpgData> items) {
@@ -28,18 +41,13 @@ public class EpgDataAdapter extends RecyclerView.Adapter<EpgDataAdapter.ViewHold
         notifyDataSetChanged();
     }
 
-    public void clear() {
-        mItems.clear();
-        notifyDataSetChanged();
+    public void setSelected(EpgData item) {
+        setSelected(mItems.indexOf(item));
     }
 
-    public EpgData get(int position) {
-        return mItems.get(position);
-    }
-
-    public void setSelected(EpgData selected) {
-        for (EpgData item : mItems) item.setSelected(selected);
-        notifyDataSetChanged();
+    public void setSelected(int position) {
+        for (int i = 0; i < mItems.size(); i++) mItems.get(i).setSelected(i == position);
+        notifyItemRangeChanged(0, getItemCount());
     }
 
     @Override
@@ -58,21 +66,21 @@ public class EpgDataAdapter extends RecyclerView.Adapter<EpgDataAdapter.ViewHold
         EpgData item = mItems.get(position);
         holder.binding.time.setText(item.getTime());
         holder.binding.title.setText(item.getTitle());
+        setListStyle(holder);
         holder.binding.getRoot().setSelected(item.isSelected());
-        holder.binding.getRoot().setLeftListener(mListener::hideEpg);
-        holder.binding.getRoot().setOnClickListener(v -> {
-            if (!item.isFuture()) mListener.onItemClick(item);
+        holder.binding.getRoot().setOnClickListener(view -> {
+            if (!item.isFuture()) listener.onItemClick(item);
         });
     }
 
-    public interface OnClickListener {
-
-        void hideEpg();
-
-        void onItemClick(EpgData item);
+    private void setListStyle(ViewHolder holder) {
+        boolean classic = LiveSetting.isListStyleClassic();
+        holder.binding.getRoot().setBackgroundResource(classic ? R.drawable.shape_live_classic : R.drawable.shape_live);
+        holder.binding.title.setTextColor(ContextCompat.getColorStateList(holder.binding.title.getContext(), classic ? R.color.selector_live_text_classic : R.color.selector_live_text));
+        holder.binding.time.setTextColor(ContextCompat.getColorStateList(holder.binding.time.getContext(), classic ? R.color.selector_live_text_classic : R.color.selector_live_text));
     }
 
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
         private final AdapterEpgDataBinding binding;
 
