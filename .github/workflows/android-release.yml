@@ -110,7 +110,6 @@ jobs:
         id: meta
         run: |
           VERSION_NAME="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*"\([^"]*\)".*/\1/p' app/build.gradle | head -1)"
-          VERSION_CODE="$(sed -n 's/^[[:space:]]*versionCode[[:space:]]*\([0-9][0-9]*\).*/\1/p' app/build.gradle | head -1)"
           CHANNEL="${{ inputs.release_channel }}"
           if [ "$CHANNEL" = "auto" ] || [ -z "$CHANNEL" ]; then
             if [ "${{ github.ref_name }}" = "dev" ] || [ "${{ github.ref_name }}" = "fongmi-sync" ]; then
@@ -121,6 +120,8 @@ jobs:
           fi
           COMMIT_EPOCH="$(git show -s --format=%ct "$GITHUB_SHA")"
           TAG_TIME="$(date -d "@$COMMIT_EPOCH" +%Y%m%d%H%M)"
+          # Minutes since 2024-01-01: monotonic, below Android's versionCode limit.
+          VERSION_CODE="$(( (COMMIT_EPOCH - 1704067200) / 60 + 560000 ))"
           if [ "$CHANNEL" = "beta" ]; then
             APK_SUFFIX="-beta"
             TAG_PATTERN="^v${VERSION_NAME}-beta-[0-9]{12}$"
@@ -189,6 +190,7 @@ jobs:
         env:
           WEBHTV_RELEASE_TAG: ${{ steps.meta.outputs.tag }}
           WEBHTV_APK_SUFFIX: ${{ steps.meta.outputs.apk_suffix }}
+          WEBHTV_VERSION_CODE: ${{ steps.meta.outputs.version_code }}
         run: |
           chmod +x ./gradlew
           rm -rf Release/apk

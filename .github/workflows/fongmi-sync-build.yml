@@ -17,6 +17,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 env:
   TZ: Asia/Shanghai
@@ -148,6 +149,18 @@ jobs:
       - name: Push verified synced source
         if: steps.sync.outputs.changed == 'true'
         run: git push origin HEAD:main
+
+      - name: Publish stable in-app update
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run android-release.yml \
+            --ref main \
+            -f release_channel=stable \
+            -f prerelease=false \
+            -f sync_cnb=false \
+            -f release_notes="自动同步 Silent1566/webhtv 上游，并保留手机版电视直播与 EPG 界面。"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
