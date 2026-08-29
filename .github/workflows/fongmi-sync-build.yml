@@ -86,6 +86,7 @@ jobs:
           fi
 
           protected_head="$(git rev-parse HEAD)"
+          echo "protected_head=${protected_head}" >> "$GITHUB_OUTPUT"
           git merge --no-edit --no-ff --no-commit "refs/remotes/upstream/$UPSTREAM_BRANCH" || true
 
           # Restore the complete, verified mobile TV live / EPG implementation.
@@ -101,6 +102,16 @@ jobs:
             echo "Preserved local live file: $path"
           done <<< "$PROTECTED_LIVE_FILES"
 
+          # Pin CI definitions to this fork. The default GITHUB_TOKEN cannot create
+          # or update files under .github/workflows/, so any upstream workflow change
+          # would make the later push fail with "refusing to allow a GitHub App to
+          # create or update workflow ... without `workflows` permission".
+          rm -rf .github/workflows
+          git rm -r -q -f --cached --ignore-unmatch -- .github/workflows
+          git checkout "$protected_head" -- .github/workflows
+          git add -A -- .github/workflows
+          echo "Pinned .github/workflows to ${protected_head}."
+
           unresolved="$(git diff --name-only --diff-filter=U)"
           if [ -n "$unresolved" ]; then
             echo "::error title=Upstream merge conflict::Non-live conflicts remain; no push was attempted."
@@ -109,8 +120,20 @@ jobs:
             exit 1
           fi
 
-          git commit -m "Merge Silent1566/main and preserve mobile TV live UI"
+          git commit -m "Merge Silent1566/main, preserve mobile TV live UI, pin fork CI"
           echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Verify fork CI definitions untouched
+        if: steps.sync.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          drift="$(git diff --name-only "${{ steps.sync.outputs.protected_head }}" HEAD -- .github/workflows)"
+          if [ -n "$drift" ]; then
+            echo "::error title=Workflow drift::Merge changed CI files; the push would be rejected."
+            printf '%s\n' "$drift"
+            exit 1
+          fi
+          echo "Fork CI definitions unchanged."
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
