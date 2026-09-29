@@ -1,8 +1,12 @@
 package com.fongmi.android.tv.ui.dialog;
 
 import androidx.fragment.app.FragmentActivity;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewbinding.ViewBinding;
 
+import com.fongmi.android.tv.R;
 import com.fongmi.android.tv.api.config.LiveConfig;
 import com.fongmi.android.tv.api.config.VodConfig;
 import com.fongmi.android.tv.api.config.WallConfig;
@@ -20,6 +24,7 @@ public class HistoryDialog extends BaseAlertDialog implements ConfigAdapter.OnCl
     private ConfigListener listener;
     private boolean readOnly;
     private int type;
+    private ItemTouchHelper sortTouchHelper;
 
     public static HistoryDialog create() {
         return new HistoryDialog();
@@ -72,6 +77,18 @@ public class HistoryDialog extends BaseAlertDialog implements ConfigAdapter.OnCl
         binding.recycler.setHasFixedSize(false);
         binding.recycler.addItemDecoration(new SpaceItemDecoration(1, 16));
         binding.recycler.setAdapter(adapter.readOnly(readOnly).addAll(type, getConfig()));
+        if (type == 0 && !readOnly) attachSortHelper();
+    }
+
+    private void attachSortHelper() {
+        sortTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
+            @Override public boolean isLongPressDragEnabled() { return false; }
+            @Override public boolean onMove(@NonNull RecyclerView view, @NonNull RecyclerView.ViewHolder from, @NonNull RecyclerView.ViewHolder to) {
+                return adapter.drag(from.getBindingAdapterPosition(), to.getBindingAdapterPosition());
+            }
+            @Override public void onSwiped(@NonNull RecyclerView.ViewHolder holder, int direction) { }
+        });
+        sortTouchHelper.attachToRecyclerView(binding.recycler);
     }
 
     private Config getConfig() {
@@ -85,13 +102,30 @@ public class HistoryDialog extends BaseAlertDialog implements ConfigAdapter.OnCl
 
     @Override
     public void onTextClick(Config item) {
-        if (listener != null) listener.setConfig(item);
+        if (listener == null) return;
+        listener.setConfig(item);
         dismiss();
     }
 
     @Override
+    public boolean onTextLongClick(ConfigAdapter.ViewHolder holder) {
+        if (type != 0 || readOnly || sortTouchHelper == null) return false;
+        sortTouchHelper.startDrag(holder);
+        return true;
+    }
+
+    @Override
     public void onDeleteClick(Config item) {
-        if (adapter.remove(item) == 0) dismiss();
+        androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.config_delete_title)
+                .setMessage(getString(R.string.config_delete_message, item.getDesc()))
+                .setNegativeButton(R.string.dialog_negative, null)
+                .setPositiveButton(R.string.dialog_positive, (target, which) -> {
+                    if (adapter.remove(item) == 0) dismiss();
+                })
+                .create();
+        dialog.setOnShowListener(target -> dialog.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).requestFocus());
+        dialog.show();
     }
 
     @Override

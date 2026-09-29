@@ -57,7 +57,14 @@ public class EpisodeDetailDialog {
                            java.util.List<String> preloadedPhotos,
                            java.util.List<TmdbPerson> preloadedGuests,
                            android.content.DialogInterface.OnDismissListener dismissListener) {
-        TmdbEpisode tmdbEpisode = episode.getTmdbEpisode();
+        show(activity, episode, null, site, preloadedPhotos, preloadedGuests, dismissListener);
+    }
+
+    public static void show(FragmentActivity activity, Episode episode, TmdbEpisode boundTmdbEpisode, Site site,
+                           java.util.List<String> preloadedPhotos,
+                           java.util.List<TmdbPerson> preloadedGuests,
+                           android.content.DialogInterface.OnDismissListener dismissListener) {
+        TmdbEpisode tmdbEpisode = boundTmdbEpisode != null ? boundTmdbEpisode : episode.getTmdbEpisode();
         if (tmdbEpisode == null) {
             // 电影没有分集对象，尝试从宿主获取影片级数据
             if (activity instanceof com.fongmi.android.tv.ui.host.TmdbDetailHost) {
@@ -352,7 +359,7 @@ public class EpisodeDetailDialog {
             try {
                 // 调用TMDB API获取剧集图片
                 TmdbService service = new TmdbService();
-                TmdbConfig config = TmdbConfig.objectFrom(Setting.getTmdbConfig());
+                TmdbConfig config = TmdbConfig.effectiveCurrent();
 
                 android.util.Log.d("EpisodeDetail", "开始请求TMDB API...");
 
@@ -389,10 +396,13 @@ public class EpisodeDetailDialog {
                             guestsLabel.setVisibility(View.VISIBLE);
                             guestsGrid.setVisibility(View.VISIBLE);
                             guestsGrid.setHorizontalSpacing(ResUtil.dp2px(12));
-                            guestsGrid.setRowHeight(ResUtil.dp2px(154));
+                            boolean cinema = Setting.isTmdbCinemaStyle();
+                            guestsGrid.setRowHeight(ResUtil.dp2px(cinema ? 90 : 154));
+                            if (cinema) resizeGuestGrid(guestsGrid);
 
                             TmdbPersonAdapter guestAdapter = new TmdbPersonAdapter(person -> TmdbPersonDialog.show(activity, person, site));
                             guestAdapter.setLight(light);
+                            guestAdapter.setCinema(cinema);
                             guestAdapter.setItems(guests);
                             guestsGrid.setAdapter(guestAdapter);
                         }
@@ -445,16 +455,25 @@ public class EpisodeDetailDialog {
             guestsLabel.setVisibility(View.VISIBLE);
             guestsGrid.setVisibility(View.VISIBLE);
             guestsGrid.setHorizontalSpacing(ResUtil.dp2px(12));
-            guestsGrid.setRowHeight(ResUtil.dp2px(154));
+            boolean cinema = Setting.isTmdbCinemaStyle();
+            guestsGrid.setRowHeight(ResUtil.dp2px(cinema ? 90 : 154));
+            if (cinema) resizeGuestGrid(guestsGrid);
 
             TmdbPersonAdapter guestAdapter = new TmdbPersonAdapter(person -> TmdbPersonDialog.show(activity, person, null));
             guestAdapter.setLight(light);
+            guestAdapter.setCinema(cinema);
             guestAdapter.setItems(guests);
             guestsGrid.setAdapter(guestAdapter);
         } else {
             guestsLabel.setVisibility(View.GONE);
             guestsGrid.setVisibility(View.GONE);
         }
+    }
+
+    private static void resizeGuestGrid(androidx.leanback.widget.HorizontalGridView guestsGrid) {
+        ViewGroup.LayoutParams params = guestsGrid.getLayoutParams();
+        params.height = ResUtil.dp2px(104);
+        guestsGrid.setLayoutParams(params);
     }
 
     /**
