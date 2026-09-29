@@ -215,7 +215,7 @@ jobs:
             :app:assembleMobileArmeabi_v7aRelease \
             :app:assembleLeanbackArm64_v8aRelease \
             :app:assembleLeanbackArmeabi_v7aRelease \
-            --no-daemon
+            --no-daemon --stacktrace
 
       - name: Collect artifacts
         run: |
