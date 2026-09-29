@@ -210,12 +210,24 @@ jobs:
         run: |
           chmod +x ./gradlew
           rm -rf Release/apk
+          # --max-workers=1 is deliberate. With org.gradle.parallel=true, building
+          # all four release variants in a single invocation intermittently fails
+          # in com.android.build.gradle.tasks.PackageAndroidArtifact
+          # $IncrementalSplitterRunnable with no reported cause:
+          #   1) run 36519155429 -> FAILED
+          #   2) run 36521970551 (--stacktrace) -> success
+          #   3) run 36524419508 (same command as 1) -> success
+          # The same command succeeding and failing on different runs makes this
+          # a race in parallel APK packaging, not a configuration error. Gradle
+          # documents --max-workers as the supported mitigation. Release builds
+          # run once a day, so trading wall-clock time for determinism is fine.
           ./gradlew \
             :app:assembleMobileArm64_v8aRelease \
             :app:assembleMobileArmeabi_v7aRelease \
             :app:assembleLeanbackArm64_v8aRelease \
             :app:assembleLeanbackArmeabi_v7aRelease \
-            --no-daemon
+            --no-daemon \
+            --max-workers=1
 
       - name: Collect artifacts
         run: |
